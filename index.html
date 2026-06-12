@@ -1,17 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
+
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SPA simples</title>
+
+    <link rel="stylesheet" href="./assets/css/style.css">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .catch(err => console.error("Erro no SW:", err));
+        }
+    </script>
 </head>
+
 <body>
 
-<!-- includes fixos (header/footer/etc) -->
-<div include="./assets/components/header.html"></div>
+    <!-- onde as páginas vão aparecer -->
+    <div id="app"></div>
 
-<!-- onde as páginas vão aparecer -->
-<div id="app"></div>
+    <script src="app.js"></script>
 
-<script src="app.js"></script>
+    <!-- <script type="module" src="./assets/js/script.js" defer></script> -->
+
+    <script src="./assets/js/script.js" defer></script>
 
 </body>
-</html>
+

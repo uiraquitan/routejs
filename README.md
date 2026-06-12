@@ -10,17 +10,15 @@
 
 ## 📌 Sobre o projeto
 
-Este projeto é um **mini framework SPA (Single Page Application)** feito em **JavaScript puro**, sem backend e sem dependência de frameworks.
+Este projeto é um **mini framework SPA (Single Page Application)** corporativo e modular feito em **JavaScript puro (Vanilla)**, operando de forma 100% client-side e sem dependências externas.
 
-Ele simula funcionalidades comuns de frameworks modernos:
+Ele simula arquiteturas robustas de roteamento e componentização do ecossistema moderno de desenvolvimento:
 
-- 🔁 Rotas estilo GET (SPA)
-- 📦 Include tipo PHP (`include header/footer/components`)
-- ⚡ Navegação sem reload de página
-- 🧩 Componentização de HTML
-- 🌐 Carregamento dinâmico via `fetch`
-
-Ideal para estudos, protótipos e projetos leves.
+- **📦 Modularidade Isolada (`router.js`):** Arquivo de configuração de rotas completamente separado do motor principal (`app.js`).
+- **🔁 Inclusão Dinâmica (Estilo PHP):** O motor injeta arquivos de scripts externos dinamicamente no DOM sob demanda, prevenindo vazamento de memória e duplicação de escopos.
+- **🛡️ Tratamento de Erros Robusto (Anti-Broken URL):** Se uma rota não for encontrada ou falhar, o histórico e a barra de endereços do navegador **permanecem intactos**, exibindo uma view customizada com os logs técnicos na interface.
+- **🧩 Componentização de HTML (`include`):** Carregamento assíncrono de fragments e parciais via `fetch` de forma automatizada.
+- **⚡ Injeção Inteligente de Scripts:** Lê, clona atributos e executa tags `<script>` (tanto blocos comuns quanto `type="module"`) de páginas assíncronas no cabeçalho.
 
 ---
 
@@ -28,7 +26,9 @@ Ideal para estudos, protótipos e projetos leves.
 
 ```text
 /index.html
-/app.js
+/app.js          <- Motor Core do Framework SPA
+/router.js       <- Arquivo de Configuração das Rotas (Módulo Separado)
+/erro-404.html   <- View Customizada de Fallback para Erros Globais
 
 /assets/
 │

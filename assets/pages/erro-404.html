@@ -1,0 +1,13 @@
+<h2>Ops! Algo deu errado.</h2>
+<p id="msg-tela"></p>
+
+<script>
+    // Como o script roda após a injeção no DOM pelo seu motor executarScriptsDoConteudo
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.SPA_LAST_ERROR) {
+            document.getElementById("msg-tela").innerText = window.SPA_LAST_ERROR;
+            // Limpa o estado da memória após o uso para não vazar para as próximas rotas
+            window.SPA_LAST_ERROR = null; 
+        }
+    });
+</script>
