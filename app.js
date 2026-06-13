@@ -1,6 +1,6 @@
 window.onRouteLoad = null;
 
-// FUNÇÃO ORIGINAL COMPLETA E INTACTA (Com tratamento de erro interno)
+// SUA FUNÇÃO ORIGINAL COMPLETA E INTACTA (Com tratamento de erro interno)
 async function include() {
     const elements = document.querySelectorAll('[include]');
     for (const el of elements) {
@@ -71,7 +71,7 @@ let executandoCargaSPA = false;
 async function renderizarPaginaErro(mensagem, appContainer) {
     const file404 = "./assets/pages/erro-404.html";
     try {
-        // Ativa a trava antes de renderizar o 404 para o DOMContentLoaded não reiniciar o ciclo
+        // 🔥 CORREÇÃO: Ativa a trava antes de renderizar o 404 para o DOMContentLoaded não reiniciar o ciclo
         executandoCargaSPA = true; 
 
         const response = await fetch(file404);
@@ -83,7 +83,7 @@ async function renderizarPaginaErro(mensagem, appContainer) {
         // Injeta a string do erro diretamente no elemento reservado do 404
         const txtErro = document.getElementById("string-erro-spa");
         if (txtErro) {
-            txtErro.innerText = mensagem; // CORRIGIDO: de 'message' para 'mensagem'
+            txtErro.innerText = message;
         }
 
         // Processa os componentes internos e scripts da própria página de erro
@@ -109,11 +109,6 @@ async function loadRoute(path) {
     if (!app) {
         console.error("[SPA Framework] Elemento container '#app' não foi encontrado no DOM.");
         return;
-    }
-
-    // CORRIGIDO: Se o Live Server carregar apontando para o arquivo index.html, força a rota "/"
-    if (path === "/index.html") {
-        path = "/";
     }
     
     const mapaRotas = window.routes;
@@ -190,7 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // PHP-Like Include automatizado
     const scriptRouter = document.createElement("script");
-    scriptRouter.src = "./assets/router.js"; 
+    scriptRouter.src = "./router.js"; 
     
     scriptRouter.onerror = (err) => {
         const msg = "Falha catastrófica de carregamento: O arquivo físico './router.js' não foi encontrado na pasta.";
