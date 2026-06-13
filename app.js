@@ -1,6 +1,6 @@
 window.onRouteLoad = null;
 
-// SUA FUNÇÃO ORIGINAL COMPLETA E INTACTA
+// FUNÇÃO ORIGINAL COMPLETA E INTACTA (Com tratamento de erro interno)
 async function include() {
     const elements = document.querySelectorAll('[include]');
     for (const el of elements) {
@@ -11,9 +11,11 @@ async function include() {
                 const html = await response.text();
                 el.innerHTML = html;
                 el.removeAttribute('include'); // Evita loops em re-renderizações
+            } else {
+                console.error(`[SPA Framework] Falha no include. Status: ${response.status} para o arquivo: ${file}`);
             }
         } catch (error) {
-            console.error(`Erro ao incluir componente: ${file}`, error);
+            console.error(`[SPA Framework] Erro de rede ou permissão ao incluir componente: ${file}`, error);
         }
     }
 }
@@ -30,7 +32,11 @@ async function executarScriptsDoConteudo(container) {
 
         // Clona os atributos originais (src, type, defer, etc.)
         Array.from(scriptAntigo.attributes).forEach(attr => {
-            scriptNovo.setAttribute(attr.name, attr.value);
+            try {
+                scriptNovo.setAttribute(attr.name, attr.value);
+            } catch (attrError) {
+                console.error(`[SPA Framework] Erro ao clonar atributo do script: ${attr.name}`, attrError);
+            }
         });
         
         scriptNovo.setAttribute("data-page-script", "true");
@@ -40,84 +46,161 @@ async function executarScriptsDoConteudo(container) {
                 const response = await fetch(scriptAntigo.src);
                 if (response.ok) {
                     scriptNovo.innerHTML = await response.text();
+                } else {
+                    console.error(`[SPA Framework] Script externo retornou status ${response.status}: ${scriptAntigo.src}`);
                 }
             } catch (err) {
-                console.error(`Erro ao carregar script: ${scriptAntigo.src}`, err);
+                console.error(`[SPA Framework] Erro crítico ao carregar/ler script externo: ${scriptAntigo.src}`, err);
             }
         } else {
             scriptNovo.innerHTML = scriptAntigo.innerHTML;
         }
 
-        document.head.appendChild(scriptNovo);
+        try {
+            document.head.appendChild(scriptNovo);
+        } catch (appendError) {
+            console.error(`[SPA Framework] Erro ao injetar script no HEAD da página.`, appendError);
+        }
     }
 }
 
 // Variável de controle para evitar o loop infinito de eventos
 let executandoCargaSPA = false;
 
-// Gerenciador de Carga de Rotas mantendo o seu fluxo original
+// Função auxiliar interna para renderizar a página de erro sem alterar a URL
+async function renderizarPaginaErro(mensagem, appContainer) {
+    const file404 = "./assets/pages/erro-404.html";
+    try {
+        // Ativa a trava antes de renderizar o 404 para o DOMContentLoaded não reiniciar o ciclo
+        executandoCargaSPA = true; 
+
+        const response = await fetch(file404);
+        if (!response.ok) throw new Error(`HTTP ${response.status} - Arquivo ${file404} não pôde ser lido.`);
+        
+        const html = await response.text();
+        appContainer.innerHTML = html;
+
+        // Injeta a string do erro diretamente no elemento reservado do 404
+        const txtErro = document.getElementById("string-erro-spa");
+        if (txtErro) {
+            txtErro.innerText = mensagem; // CORRIGIDO: de 'message' para 'mensagem'
+        }
+
+        // Processa os componentes internos e scripts da própria página de erro
+        await include();
+        await executarScriptsDoConteudo(appContainer);
+        
+        // Dispara o evento sabendo que a trava 'executandoCargaSPA' vai segurar o loop externo
+        document.dispatchEvent(new Event("DOMContentLoaded"));
+
+    } catch (e) {
+        console.error(`[SPA Framework] Erro crítico ao tentar renderizar a página de fallback 404:`, e);
+        // Fallback do fallback caso o arquivo erro-404.html também suma da pasta
+        appContainer.innerHTML = `<div style="padding:20px;color:#ef4444;font-family:sans-serif;"><h2>Erro Crítico</h2><p>${mensagem}</p></div>`;
+    } finally {
+        // Libera o roteador após processar tudo com segurança
+        setTimeout(() => { executandoCargaSPA = false; }, 50);
+    }
+}
+
+// Gerenciador de Carga de Rotas centralizado
 async function loadRoute(path) {
     const app = document.getElementById("app");
+    if (!app) {
+        console.error("[SPA Framework] Elemento container '#app' não foi encontrado no DOM.");
+        return;
+    }
+
+    // CORRIGIDO: Se o Live Server carregar apontando para o arquivo index.html, força a rota "/"
+    if (path === "/index.html") {
+        path = "/";
+    }
     
-    // Puxa do objeto global que o router.js vai expor
-    const mapaRotas = window.routes || {};
-    const file = mapaRotas[path] || mapaRotas["/"];
+    const mapaRotas = window.routes;
     
+    // TRATAMENTO 1: Objeto de rotas global não inicializado
+    if (!mapaRotas) {
+        const msg = "O mapa de mapeamento 'window.routes' não foi carregado pelo router.js.";
+        console.error(`[SPA Framework] Erro Crítico: ${msg}`);
+        await renderizarPaginaErro(msg, app);
+        return;
+    }
+
+    const file = mapaRotas[path];
+    
+    // TRATAMENTO 2: Rota inexistente (Interrompe o fluxo e chama o 404 na tela)
     if (!file) {
-        console.error(`Nenhuma rota definida para: ${path}`);
+        const msg = `A rota '${path}' não está mapeada no seu arquivo de configurações.`;
+        console.error(`[SPA Framework] Rota não encontrada: ${msg}`);
+        await renderizarPaginaErro(msg, app);
         return;
     }
     
     try {
-        executandoCargaSPA = true; // Ativa a trava antes de carregar
+        executandoCargaSPA = true; // Ativa a trava de ciclo antes de carregar rota válida
 
         const response = await fetch(file);
-        if (!response.ok) throw new Error(`Arquivo não encontrado: ${file}`);
+        
+        // TRATAMENTO 3: Arquivo mapeado existe no router.js mas foi deletado da pasta física
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status} - O arquivo físico '${file}' está ausente ou inacessível no servidor.`);
+        }
+        
         const html = await response.text();
 
-        // 1. Injeta o HTML puro da página
+        // 1. Injeta o HTML válido
         app.innerHTML = html;
         
-        // 2. O seu include original rodando perfeitamente
+        // 2. Executa os sub-includes do componente
         await include();
 
-        // 3. Executa os scripts que vierem na página (com ou sem module)
+        // 3. Executa os scripts vinculados
         await executarScriptsDoConteudo(app);
 
-        // 4. 🔥 O TRUQUE CORRIGIDO: Dispara o evento para o script do aluno, 
-        // mas a trava 'executandoCargaSPA' impede o app.js de reiniciar o ciclo.
+        // 4. Dispara ciclo de vida global
         document.dispatchEvent(new Event("DOMContentLoaded"));
 
-        // 5. Atualiza o Histórico de navegação (PushState)
+        // 5. Atualiza o Histórico de navegação apenas se a rota foi resolvida com sucesso
         if (window.location.pathname !== path) {
             history.pushState({}, "", path);
         }
 
-        // 6. Dispara o seu gatilho global original caso precise
+        // 6. Gatilho global customizado
         if (typeof window.onRouteLoad === "function") {
-            window.onRouteLoad();
+            try {
+                window.onRouteLoad();
+            } catch (hookError) {
+                console.error("[SPA Framework] Erro lançado dentro de window.onRouteLoad():", hookError);
+            }
         }
 
-        // Libera a trava após a execução completa de todas as lógicas
         setTimeout(() => { executandoCargaSPA = false; }, 50);
 
     } catch (error) {
-        executandoCargaSPA = false;
-        console.error(`Erro crítico ao carregar rota: ${file}`, error);
+        console.error(`[SPA Framework] Falha no fluxo de processamento da rota:`, error);
+        // Exibe o erro de renderização/infraestrutura na tela do usuário
+        await renderizarPaginaErro(error.message || error, app);
     }
 }
 
 // Captura cliques de links com o atributo data-link
 document.addEventListener("DOMContentLoaded", () => {
-    // 🔥 Se o evento foi disparado pelo próprio mecanismo interno do SPA, ignora para não gerar o loop
+    // Se a trava estiver ligada (vinda do motor ou do renderizador de erro), ignora o disparo
     if (executandoCargaSPA) return;
 
-    // 🔥 O SEU INCLUDE ESTILO PHP: Injeta o router.js em tempo de execução
+    // PHP-Like Include automatizado
     const scriptRouter = document.createElement("script");
-    scriptRouter.src = "./router.js"; 
+    scriptRouter.src = "./assets/router.js"; 
     
-    // Só dispara o motor e os escutadores quando o arquivo externo for totalmente lido
+    scriptRouter.onerror = (err) => {
+        const msg = "Falha catastrófica de carregamento: O arquivo físico './router.js' não foi encontrado na pasta.";
+        console.error(`[SPA Framework] ${msg}`, err);
+        const app = document.getElementById("app");
+        if (app) renderizarPaginaErro(msg, app);
+    };
+    
     scriptRouter.onload = () => {
+        // Roda a verificação inicial baseada na URL atual da barra
         loadRoute(window.location.pathname);
 
         document.body.addEventListener("click", e => {

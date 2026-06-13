@@ -11,7 +11,7 @@
 <section id="download">
     <h2>Baixar Boilerplate Estruturado</h2>
     <p>Clique no botão abaixo para baixar o arquivo compactado contendo toda a estrutura de pastas pronta, incluindo o Service Worker e o Roteador configurados.</p>
-    <a href="https://azerup.com/public_html/rotajs-2.0.rar" download="projeto-spa.zip" class="btn-download">
+    <a href="https://github.com/uiraquitan/routejs" target="_blank" download="projeto-spa.zip" class="btn-download">
         📥 Baixar Framework Prontinho (.zip)
     </a>
 </section>
@@ -19,23 +19,25 @@
 <!-- DOCUMENTAÇÃO: INDEX HTML -->
 <section id="index-html">
     <h2>index.html Inicial</h2>
-    <pre><code>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-    &lt;title&gt;Meu Sistema SPA&lt;/title&gt;
-    &lt;script&gt;
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js');
-        }
-    &lt;/script&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;div include="./assets/components/sidebar.html"&gt;&lt;/div&gt;
-    &lt;div id="app"&gt;&lt;/div&gt;
-    &lt;script type="module" src="app.js"&gt;&lt;/script&gt;
-    &lt;script type="module" src="./assets/js/script.js"&gt;&lt;/script&gt;
-&lt;/body&gt;
-&lt;/html&gt;</code></pre>
+    <p>Na linha 12, é apenas para que você crie somente um componente e ele possa ser chamado em qualquer lugar, sem precisar repetir o mesmo html copiando e salvando em várias pastas ou: componente1 na pasta 1, e componente1 na pasta2, sendo assim, podendo ser usado somente 1 e chamando ele em todas as outras estruturas de codigo. Acesse <strong> Componentes & Versões</strong> no menu a esquerda e veja  um exemplo</p>
+    <p>Nas linhas 14 e 15, você tem a opção de escolher um arquivo requisitado como módulo ou diretamente, basta escolher uma das requisições de script.js</p>
+    <pre><code>1: &lt;!DOCTYPE html&gt;
+2: &lt;html&gt;
+3: &lt;head&gt;
+4:     &lt;title&gt;Meu Sistema SPA&lt;/title&gt;
+5:     &lt;script&gt;
+6:         if ('serviceWorker' in navigator) {
+7:             navigator.serviceWorker.register('/sw.js');
+8:         }
+9:     &lt;/script&gt;
+10: &lt;/head&gt;
+11: &lt;body&gt;
+12:     &lt;div include="./assets/components/sidebar.html"&gt;&lt;/div&gt;
+13:     &lt;div id="app"&gt;&lt;/div&gt;
+14:     &lt;script type="module" src="app.js"&gt;&lt;/script&gt;
+15:     &lt;script type="module" src="./assets/js/script.js"&gt;&lt;/script&gt;
+16: &lt;/body&gt;
+17: &lt;/html&gt;</code></pre>
 </section>
 
 <!-- DOCUMENTAÇÃO: SERVICE WORKER -->

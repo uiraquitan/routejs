@@ -1,13 +1,13 @@
 <h2>Ops! Algo deu errado.</h2>
-<p id="msg-tela"></p>
+<p>A rota solicitada não foi encontrada ou está inacessível.</p>
+
+<div>
+    <strong>URL chamada:</strong> 
+    <span id="url-solicitada" style="color: #ef4444; font-family: monospace;"></span>
+</div>
 
 <script>
-    // Como o script roda após a injeção no DOM pelo seu motor executarScriptsDoConteudo
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.SPA_LAST_ERROR) {
-            document.getElementById("msg-tela").innerText = window.SPA_LAST_ERROR;
-            // Limpa o estado da memória após o uso para não vazar para as próximas rotas
-            window.SPA_LAST_ERROR = null; 
-        }
-    });
+    // Executa imediatamente assim que o motor injeta o script no HEAD
+    // Sem sub-escutadores de DOMContentLoaded
+    document.getElementById("url-solicitada").innerText = window.location.pathname;
 </script>
