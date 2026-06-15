@@ -38,7 +38,7 @@ async function executarScriptsDoConteudo(container) {
                 console.error(`[SPA Framework] Erro ao clonar atributo do script: ${attr.name}`, attrError);
             }
         });
-        
+
         scriptNovo.setAttribute("data-page-script", "true");
 
         if (scriptAntigo.src) {
@@ -72,11 +72,11 @@ async function renderizarPaginaErro(mensagem, appContainer) {
     const file404 = "./assets/pages/erro-404.html";
     try {
         // 🔥 CORREÇÃO: Ativa a trava antes de renderizar o 404 para o DOMContentLoaded não reiniciar o ciclo
-        executandoCargaSPA = true; 
+        executandoCargaSPA = true;
 
         const response = await fetch(file404);
         if (!response.ok) throw new Error(`HTTP ${response.status} - Arquivo ${file404} não pôde ser lido.`);
-        
+
         const html = await response.text();
         appContainer.innerHTML = html;
 
@@ -89,7 +89,7 @@ async function renderizarPaginaErro(mensagem, appContainer) {
         // Processa os componentes internos e scripts da própria página de erro
         await include();
         await executarScriptsDoConteudo(appContainer);
-        
+
         // Dispara o evento sabendo que a trava 'executandoCargaSPA' vai segurar o loop externo
         document.dispatchEvent(new Event("DOMContentLoaded"));
 
@@ -110,9 +110,12 @@ async function loadRoute(path) {
         console.error("[SPA Framework] Elemento container '#app' não foi encontrado no DOM.");
         return;
     }
-    
+    // CORRIGIDO: Se o Live Server carregar apontando para o arquivo index.html, força a rota "/"
+    if (path === "/index.html") {
+        path = "/";
+    }
     const mapaRotas = window.routes;
-    
+
     // TRATAMENTO 1: Objeto de rotas global não inicializado
     if (!mapaRotas) {
         const msg = "O mapa de mapeamento 'window.routes' não foi carregado pelo router.js.";
@@ -122,7 +125,7 @@ async function loadRoute(path) {
     }
 
     const file = mapaRotas[path];
-    
+
     // TRATAMENTO 2: Rota inexistente (Interrompe o fluxo e chama o 404 na tela)
     if (!file) {
         const msg = `A rota '${path}' não está mapeada no seu arquivo de configurações.`;
@@ -130,22 +133,22 @@ async function loadRoute(path) {
         await renderizarPaginaErro(msg, app);
         return;
     }
-    
+
     try {
         executandoCargaSPA = true; // Ativa a trava de ciclo antes de carregar rota válida
 
         const response = await fetch(file);
-        
+
         // TRATAMENTO 3: Arquivo mapeado existe no router.js mas foi deletado da pasta física
         if (!response.ok) {
             throw new Error(`HTTP ${response.status} - O arquivo físico '${file}' está ausente ou inacessível no servidor.`);
         }
-        
+
         const html = await response.text();
 
         // 1. Injeta o HTML válido
         app.innerHTML = html;
-        
+
         // 2. Executa os sub-includes do componente
         await include();
 
@@ -185,15 +188,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // PHP-Like Include automatizado
     const scriptRouter = document.createElement("script");
-    scriptRouter.src = "./router.js"; 
-    
+    scriptRouter.src = "./assets/router.js";
+
     scriptRouter.onerror = (err) => {
         const msg = "Falha catastrófica de carregamento: O arquivo físico './router.js' não foi encontrado na pasta.";
         console.error(`[SPA Framework] ${msg}`, err);
         const app = document.getElementById("app");
         if (app) renderizarPaginaErro(msg, app);
     };
-    
+
     scriptRouter.onload = () => {
         // Roda a verificação inicial baseada na URL atual da barra
         loadRoute(window.location.pathname);
